@@ -1,0 +1,7 @@
+/* Dark gray tip styles */
+.tip-darkgray {
+    background-color: #333;
+    color: #fff;
+    padding: 10px;
+    border-radius: 4px;
+}
