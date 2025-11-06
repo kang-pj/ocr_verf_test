@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.refine.login.dao.LoginDAO">
+    
+    <select id="getUserInfo" parameterType="String" resultType="com.refine.login.vo.LoginVO">
+        SELECT usr_id as usrId,
+               pwd_no as pwdNo,
+               emp_no as empNo,
+               usr_nm as usrNm,
+               dty_nm as dtyNm,
+               inst_cd as instCd,
+               dpt_cd as dptCd,
+               dpt_nm as dptNm,
+               use_yn as useYn,
+               roles
+        FROM rfdb.c_usr
+        WHERE usr_id = #{usrId}
+          AND use_yn = 'Y'
+    </select>
+    
+    <update id="updateLastAccessTime">
+        UPDATE rfdb.c_usr
+        SET lst_acs_dttm = NOW(),
+            lst_acs_ip = #{accessIp}
+        WHERE usr_id = #{usrId}
+    </update>
+    
+</mapper>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.refine.common.code.dao.CodeDAO">
+    
+    <select id="getCodeList" parameterType="String" resultType="java.util.HashMap">
+        SELECT code_value as codeValue,
+               code_name as codeName
+        FROM rfdb.c_code
+        WHERE code_type = #{codeType}
+          AND use_yn = 'Y'
+        ORDER BY sort_order
+    </select>
+    
+    <select id="getCodeName" parameterType="java.util.HashMap" resultType="String">
+        SELECT code_name
+        FROM rfdb.c_code
+        WHERE code_type = #{codeType}
+          AND code_value = #{codeValue}
+          AND use_yn = 'Y'
+    </select>
+    
+</mapper>
