@@ -1,12 +1,36 @@
 spring:
-  application:
-    name: rf-ocr-verf
+  profiles: dev
   cloud:
     config:
-      uri: http://localhost:8888  # Config Server URL
-      fail-fast: true
-      retry:
-        initial-interval: 1000
-        max-attempts: 6
-        max-interval: 2000
-        multiplier: 1.1
+      uri: https://config.work.refinedev.io
+  application:
+    name: web_app
+endpoints:
+  refresh:
+    enabled: true
+management:
+  security:
+    enabled: false
+  endpoints:
+    web:
+      exposure:
+        include: refresh
+
+---
+spring:
+  profiles: prd
+  cloud:
+    config:
+      uri: https://config.work.refinehub.com
+  application:
+    name: web_app
+endpoints:
+  refresh:
+    enabled: true
+management:
+  security:
+    enabled: false
+  endpoints:
+    web:
+      exposure:
+        include: refresh
