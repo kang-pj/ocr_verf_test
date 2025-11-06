@@ -1,29 +1,237 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<?xml version="1.0" encoding="UTF-8"?><!--Converted at: Thu Jul 13 09:41:48 KST 2017-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.refine.SQL.login">
 
-<mapper namespace="com.refine.login.dao.LoginDAO">
-    
-    <select id="getUserInfo" parameterType="String" resultType="com.refine.login.vo.LoginVO">
-        SELECT usr_id as usrId,
-               pwd_no as pwdNo,
-               emp_no as empNo,
-               usr_nm as usrNm,
-               dty_nm as dtyNm,
-               inst_cd as instCd,
-               dpt_cd as dptCd,
-               dpt_nm as dptNm,
-               use_yn as useYn,
-               roles
-        FROM rfdb.c_usr
-        WHERE usr_id = #{usrId}
-          AND use_yn = 'Y'
-    </select>
-    
-    <update id="updateLastAccessTime">
-        UPDATE rfdb.c_usr
-        SET lst_acs_dttm = NOW(),
-            lst_acs_ip = #{accessIp}
-        WHERE usr_id = #{usrId}
-    </update>
-    
+	<resultMap id="result_login" type="login">
+		<result property="usrId" column="usr_id"/>
+		<result property="menuAuthCd" column="menu_auth_cd"/>
+		<result property="scrnAuthCd" column="scrn_auth_cd"/>
+		<result property="usrNm" column="usr_nm"/>
+		<result property="pwd" column="pwd"/>
+		<result property="useYn" column="use_yn"/>
+		<result property="inPhNo" column="inph_no"/>
+		<result property="dptCd" column="dpt_cd"/>
+		<result property="sysAuthCnts" column="sys_auth_cnts"/>
+		<result property="altnClsCd" column="altn_cls_cd"/>
+
+		<result property="telNo" column="tel_no"/>
+		<result property="faxNo" column="fax_no"/>
+		<result property="empNo" column="emp_no"/>
+
+		<result property="dtyCd" column="dty_cd"/>
+		<result property="pwChgTm"      column="pw_chg_tm"/>
+		<result property="roles" column="roles"/>
+		<result property="mltLoginYn" column="mlt_login_yn"/>
+		<result property="bfPwd" column="bf_pwd"/>
+	</resultMap>
+
+	<resultMap id="result_scrnAuth" type="scrnAuth">
+		<result property="scrnId" column="scrn_id"/>
+		<result property="prcsAuth" column="prcs_auth"/>
+	</resultMap>
+
+	<resultMap id="result_menuAuth" type="menuAuth">
+		<result property="menuId" column="menu_id"/>
+	</resultMap>
+
+	<select id="isMember" parameterType="login" resultMap="result_login">
+		SELECT USR_ID,
+			   USR_NM,
+			   USE_YN,
+			   INPH_NO,
+			   DPT_CD,
+			   ALTN_CLS_CD,
+			   TEL_NO,
+			   FAX_NO,
+			   EMP_NO,
+			   (SELECT SYS_AUTH_CNTS FROM C_DPT WHERE DPT_CD = USR.DPT_CD) SYS_AUTH_CNTS,
+			   (SELECT SCRN_AUTH_CD FROM C_DPT WHERE DPT_CD = USR.DPT_CD)  SCRN_AUTH_CD,
+			   (SELECT MENU_AUTH_CD FROM C_DPT WHERE DPT_CD = USR.DPT_CD)  MENU_AUTH_CD,
+			   DTY_CD,
+			   to_char(USR.PW_CHG_TM, 'YYYYMMDD') AS PW_CHG_TM,
+			   ROLES,
+			   MLT_LOGIN_YN
+		FROM C_USR USR
+		WHERE USR_ID = #{usrId}
+		  AND PWD_NO = #{pwd}
+		  AND USE_YN = 'Y'
+	</select>
+
+	<select id="isCognitoMember" parameterType="login" resultMap="result_login">
+		SELECT USR_ID, USR_NM, PWD_NO PWD, USE_YN, INPH_NO, DPT_CD, ALTN_CLS_CD, TEL_NO, FAX_NO,EMP_NO,
+			(SELECT SYS_AUTH_CNTS FROM C_DPT WHERE DPT_CD = USR.DPT_CD) SYS_AUTH_CNTS,
+			(SELECT SCRN_AUTH_CD FROM C_DPT WHERE DPT_CD = USR.DPT_CD) SCRN_AUTH_CD,
+			(SELECT MENU_AUTH_CD FROM C_DPT WHERE DPT_CD = USR.DPT_CD) MENU_AUTH_CD,
+			DTY_CD,to_char(usr.pw_chg_tm, 'YYYYMMDD') pw_chg_tm
+			,mlt_login_yn
+			,BF_PWD_NO as bf_pwd
+		FROM C_USR	USR
+		WHERE USR_ID = #{usrId}
+			AND USE_YN = 'Y'
+	</select>
+
+	<select id="getMember" parameterType="String" resultMap="result_login">
+		SELECT USR_ID, USR_NM
+		FROM C_USR
+	  	WHERE USR_ID = #{usrId} AND USE_YN = 'Y'
+	</select>
+
+	<select id="getPwMiss" parameterType="String" resultType="String">
+		SELECT pw_miss
+		FROM C_USR
+	  	WHERE USR_ID = #{usrId} AND USE_YN = 'Y'
+	</select>
+
+
+	<update id="isPwMiss" parameterType="java.util.HashMap">
+		UPDATE C_USR SET
+			<if test="loginMiss == 'Y'">
+				<if test='pw_miss == "4"'>
+					LOCK = 'Y',
+				</if>
+					PW_MISS = (PW_MISS::integer + 1)::varchar
+			</if>
+			<if test="loginMiss == 'N'">
+					PW_MISS = '0'
+			</if>
+	  	WHERE USR_ID = #{usrId} AND USE_YN = 'Y'
+	</update>
+
+	<insert id="insertLockHis"  parameterType="java.util.HashMap">
+		INSERT INTO C_USR_LOCK_HIS (
+			dpt_nm,
+			dty_nm,
+			tel_no,
+			usr_id,
+			usr_nm,
+			lock_dttm
+		)
+		SELECT
+			(SELECT dpt_nm FROM C_DPT WHERE DPT_CD = USR.DPT_CD)  dpt_nm,
+			USR.dty_nm,
+			USR.tel_no,
+			USR.usr_id,
+			USR.usr_nm,
+			aws_oracle_ext.SYSDATE()
+		FROM C_USR  USR
+		WHERE USR_ID = #{usrId} AND USE_YN = 'Y'
+	</insert>
+
+	<!-- 화면권한 리스트 -->
+	<select id="getScrnAuth" parameterType="String" resultMap="result_scrnAuth">
+	SELECT SCRN_ID, PRCS_AUTH
+	FROM C_SCRN_AUTH
+	WHERE SCRN_AUTH_CD IN
+	    (with recursive rgroup(dpt_cd, upr_dpt_cd, scrn_auth_cd, arr, cycle) as (
+	        select a.dpt_cd, a.upr_dpt_cd, scrn_auth_cd, array[a.dpt_cd], false
+	        from (
+	            select dpt_cd, upr_dpt_cd, scrn_auth_cd
+	            from rfdb.c_dpt
+	            where dpt_cd = #{dptCd}
+	        ) as a
+
+	        union all
+
+	        select a.dpt_cd, a.upr_dpt_cd, a.scrn_auth_cd, cast(r.arr||a.dpt_cd as varchar(6)[]), a.dpt_cd=any(r.arr)
+	        from (
+	            select dpt_cd, upr_dpt_cd, scrn_auth_cd
+	            from rfdb.c_dpt
+	        ) as a, rgroup as r
+	        where r.dpt_cd = a.upr_dpt_cd
+	        and not cycle
+	    )
+	    select scrn_auth_cd
+	    from rgroup
+	    )
+	GROUP BY SCRN_ID, PRCS_AUTH
+	</select>
+
+	<!-- 메뉴권한 리스트 -->
+	<select id="getMenuAuth" parameterType="String" resultType="java.util.HashMap">
+		SELECT menu_cd
+			 , url_addr
+			 , menu_url
+		FROM rfdb.v_portal_menu_auth vpma
+		WHERE use_yn = 'Y'
+		  AND #{usrId} = ANY(auth_usr_id)
+		ORDER BY grp_odr
+	</select>
+
+	<!-- MAIN 메뉴 업무별 MAX값 구하기 -->
+	<select id="selectMainData" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+
+		SELECT TSK, TOTAL
+			FROM (
+			SELECT '전세' TSK, COUNT(CTRL_NO) TOTAL
+			  FROM L_REQ
+			 WHERE REQ_ACPT_DTTM BETWEEN TO_DATE(concat(TO_CHAR (aws_oracle_ext.SYSDATE(), 'YYYYMMDD'),' 00:00:00'), 'YYYYMMDD hh24:mi:ss') AND TO_DATE(concat(TO_CHAR (aws_oracle_ext.SYSDATE(), 'YYYYMMDD'),' 23:59:59'), 'YYYYMMDD hh24:mi:ss')
+			UNION ALL
+			SELECT '팩스' TSK, COUNT(*) TOTAL
+			  FROM L_DOC_FL
+			 WHERE 1=1
+			 AND ROWID IN (SELECT MAX(ROWID) FROM L_DOC_FL GROUP BY DOC_FL_NO)
+			 AND TO_CHAR (FAX_RCV_DTTM, 'YYYYMMDD') = TO_CHAR (aws_oracle_ext.SYSDATE(), 'YYYYMMDD')
+			UNION ALL
+			SELECT '전화' TSK, COUNT(*) TOTAL
+			  FROM L_VC_RCD_FL
+			 WHERE 1=1
+			   AND CAL_CLS_CD <![CDATA[ <> ]]> '01'
+			   AND TO_CHAR (INS_DTTM, 'YYYYMMDD') = TO_CHAR (aws_oracle_ext.SYSDATE(), 'YYYYMMDD')
+			)
+
+	</select>
+
+	<update id="updateChgPw" parameterType="java.util.HashMap">
+			UPDATE c_usr SET
+				TEL_NO = #{telNo}
+				,FAX_NO = #{faxNo}
+				,INPH_NO = SUBSTR(#{telNo}, LENGTH(#{telNo})-2)
+			<if test='passChg != null and passChg != ""'>
+				,PWD_NO = #{chgPwSHA}
+				,PW_CHG_TM = aws_oracle_ext.sysdate()
+			</if>
+			WHERE USR_ID = #{usrId}
+	</update>
+
+	<update id="updateEmp" parameterType="java.util.HashMap">
+			UPDATE RFMIS.C_EMP
+			SET
+				FST_PWD_CHG_YN = 'Y'
+			WHERE USR_ID = #{usrId}
+	</update>
+
+	<insert id="insertPwChgHis" parameterType="java.util.HashMap">
+		INSERT INTO C_USR_PW_CHG_HIS (
+			dpt_nm,
+			dty_nm,
+			tel_no,
+			usr_id,
+			usr_nm,
+			pw_chg_dttm
+		)
+		SELECT
+			(SELECT dpt_nm FROM C_DPT WHERE DPT_CD = USR.DPT_CD)  dpt_nm,
+			USR.dty_nm,
+			USR.tel_no,
+			USR.usr_id,
+			USR.usr_nm,
+			aws_oracle_ext.SYSDATE()
+		FROM C_USR  USR
+		WHERE USR_ID = #{usrId} AND USE_YN = 'Y'
+	</insert>
+
+	<select id="getPwChgTm"  parameterType="String"  resultType="String">
+		SELECT to_char(pw_chg_tm, 'YYYYMMDD') AS pw_chg_tm
+		FROM c_usr
+		WHERE usr_id = #{usrId}
+	</select>
+
+	<update id="updateChgTel" parameterType="java.util.HashMap">
+		UPDATE rfdb.c_usr
+		SET tel_no = #{telNo}
+		  , inph_no = #{inphNo}
+		  , fax_no = #{faxNo}
+		WHERE usr_id = #{usrId}
+	</update>
 </mapper>

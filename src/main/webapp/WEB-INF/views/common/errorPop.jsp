@@ -3,11 +3,13 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Ask Detail</title>
+    <title>Error Popup</title>
 </head>
 <body>
-    <div class="ask-detail">
-        <!-- Ask detail content -->
+    <div class="error-popup">
+        <h3>오류</h3>
+        <p>${errorMessage}</p>
+        <button onclick="window.close()">닫기</button>
     </div>
 </body>
 </html>
