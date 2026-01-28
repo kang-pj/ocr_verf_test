@@ -72,7 +72,8 @@ public class UserAuthenticationProvider implements AuthenticationProvider {
 		}
 
 	    if(!"LOGIN_OK".equals(validationResult.get("msg"))) {
-	    	throw new CustomBadCredentialsException("Login Error !!", validationResult);
+	    	String errorMsg = validationResult.get("msg") != null ? validationResult.get("msg").toString() : "Login Error";
+	    	throw new CustomBadCredentialsException(errorMsg);
 	    }
 
 	    //여기서 부터는 spring security 통상적인 절차.

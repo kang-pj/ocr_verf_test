@@ -70,12 +70,43 @@ public class LoginController {
 
         request.getSession().setAttribute("url_prior_login", referer);
 
-        if (request.getRequestURL().toString().contains("localhost")) {
+        // 개발 환경에서는 항상 로그인 페이지 표시
+        return "login";
+    }
+
+    @PostMapping(value = "/authenticate")
+    public String authenticate(@RequestParam String usrId, @RequestParam String pwd, 
+                             HttpServletRequest request, Map<String, Object> modelMap, HttpSession session) {
+        
+        try {
+            // 임시 테스트 계정
+            if ("admin".equals(usrId) && "admin".equals(pwd)) {
+                // 임시 사용자 정보 생성
+                LoginVO loginVO = new LoginVO();
+                loginVO.setUsrId("admin");
+                loginVO.setUsrNm("관리자");
+                loginVO.setDptCd("IT001");
+                loginVO.setDtyCd("ADMIN");
+                loginVO.setInPhNo("1234");
+                
+                // 세션에 사용자 정보 저장
+                session.setAttribute("USER", loginVO);
+                
+                return "redirect:/main";
+            } else {
+                // 실제 인증 로직 (나중에 구현)
+                // LoginVO loginVO = new LoginVO();
+                // loginVO.setUsrId(usrId);
+                // loginVO.setPwd(HashUtil.digestStringSHA256(pwd));
+                // Map<String, Object> result = loginService.preAuthenticate(loginVO);
+                
+                modelMap.put("error", "사용자 ID 또는 비밀번호가 올바르지 않습니다.");
+                return "login";
+            }
+        } catch (Exception e) {
+            logger.error("로그인 처리 중 오류 발생", e);
+            modelMap.put("error", "로그인 처리 중 오류가 발생했습니다.");
             return "login";
-        } else {
-            Map<String, Object> map = codeService.getMenuInfo("PORTAL");
-            String portalUrl = (String) map.get("url_addr");
-            return "redirect:" + portalUrl;
         }
     }
 
@@ -83,15 +114,27 @@ public class LoginController {
     public String mainpage(HttpServletRequest request, Map<String, Object> modelMap, HttpSession session) {
 
         LoginVO loginVO = (LoginVO) session.getAttribute("USER");
+        
+        // 로그인 체크
+        if (loginVO == null) {
+            return "redirect:/login";
+        }
+        
         modelMap.put("dptCd", loginVO.getDptCd());
         modelMap.put("usrId", loginVO.getUsrId());
         modelMap.put("usrNm", loginVO.getUsrNm());
         modelMap.put("dtyCd", loginVO.getDtyCd());
         modelMap.put("inPhNo", loginVO.getInPhNo());
-        modelMap.put("dbMode", ContextHolder.getDbMode());
+        modelMap.put("dbMode", "DEV"); // 임시값
         modelMap.put("localPort", request.getLocalPort());
 
         return "main";
+    }
+
+    @GetMapping(value = "/logout")
+    public String logout(HttpSession session) {
+        session.invalidate();
+        return "redirect:/login";
     }
 
     @RequestMapping(value = "/getUserInfo", method = {RequestMethod.PUT, RequestMethod.POST})

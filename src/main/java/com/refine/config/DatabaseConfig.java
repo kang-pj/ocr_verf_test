@@ -4,7 +4,7 @@ import com.refine.mybatis.RfSqlSessionTemplate;
 import com.refine.properties.RfDbProperties;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.Setter;
-import net.sf.log4jdbc.Log4jdbcProxyDataSource;
+// import net.sf.log4jdbc.Log4jdbcProxyDataSource; // 임시 주석
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.spring.SqlSessionFactoryBean;
 import org.mybatis.spring.SqlSessionTemplate;
@@ -38,7 +38,8 @@ public class DatabaseConfig {
 	
 	@Bean(name="dataSource") 
 	DataSource dataSource() throws NamingException, Exception  {
-		DataSource ds = new Log4jdbcProxyDataSource( new HikariDataSource(rfDbProperties.getHikariConfig()) );
+		// DataSource ds = new Log4jdbcProxyDataSource( new HikariDataSource(rfDbProperties.getHikariConfig()) ); // 임시 주석
+		DataSource ds = new HikariDataSource(rfDbProperties.getHikariConfig());
 		
 		logger.debug("*** init BasicDataSource : {}", "data source");
 		return ds;

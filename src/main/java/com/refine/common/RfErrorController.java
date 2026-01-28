@@ -8,8 +8,8 @@ import org.springframework.boot.web.servlet.error.ErrorAttributes;
 import org.springframework.boot.web.servlet.error.ErrorController;
 import org.springframework.http.HttpStatus;
 import org.springframework.util.Assert;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.servlet.ModelAndView;
 
@@ -17,7 +17,7 @@ import javax.servlet.RequestDispatcher;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Map;
 
-@RestController
+@Controller
 @RequestMapping("/error")
 public class RfErrorController implements ErrorController {
     public static final Logger logger = LoggerFactory.getLogger(RfErrorController.class);

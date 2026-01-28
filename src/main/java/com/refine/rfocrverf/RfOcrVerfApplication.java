@@ -5,8 +5,10 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration;
+import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.context.ApplicationPidFileWriter;
 import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -16,11 +18,15 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import java.time.Duration;
 
 @SpringBootApplication
-@EnableWebMvc
 @EnableScheduling
 @EnableAutoConfiguration(exclude = { DataSourceTransactionManagerAutoConfiguration.class, DataSourceAutoConfiguration.class })
 @ComponentScan(basePackages = "com.refine,biz.refine")
-public class RfOcrVerfApplication {
+public class RfOcrVerfApplication extends SpringBootServletInitializer {
+
+	@Override
+	protected SpringApplicationBuilder configure(SpringApplicationBuilder application) {
+		return application.sources(RfOcrVerfApplication.class);
+	}
 
 	public static void main(String[] args) {
 		SpringApplication application = new SpringApplication(RfOcrVerfApplication.class);
